@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Snake para Dalia ❤️</title>
+<style>
+  body {
+    background: #ffc0cb;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    font-family: 'Courier New', Courier, monospace;
+    position: relative;
+  }
+  #gameCanvas {
+    background: #000;
+    display: block;
+    margin: auto;
+    border: 3px solid #900;
+    border-radius: 15px;
+  }
+  #message {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #900;
+    font-size: 1.8em;
+    text-align: center;
+    white-space: pre-line;
+    display: none;
+    font-weight: bold;
+    z-index: 10;
+    max-width: 90%;
+  }
+  /* Controles táctiles */
+  #controles {
+    display: none;
+    position: fixed;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+    user-select: none;
+  }
+  #controles button {
+    width: 60px;
+    height: 60px;
+    font-size: 30px;
+    margin: 5px;
+    border-radius: 10px;
+    border: none;
+    background: #900;
+    color: white;
+    opacity: 0.8;
+  }
+  #controles button:active {
+    opacity: 1;
+  }
+  /* Mostrar controles en pantallas pequeñas */
+  @media (max-width: 600px) {
+    #controles {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      width: 220px;
+      margin: 0 auto;
+    }
+    #controles button {
+      flex: 1 1 40px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<audio id="music" src="antes_que_al_mio.mp3" preload="auto" loop></audio>
+
+<canvas id="gameCanvas" width="400" height="400"></canvas>
+<div id="message"></div>
+
+<!-- Controles táctiles -->
+<div id="controles">
+  <button id="upBtn">↑</button>
+  <button id="leftBtn">←</button>
+  <button id="downBtn">↓</button>
+  <button id="rightBtn">→</button>
+</div>
+
+<script>
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+  const box = 20;
+  const canvasSize = 400;
+  const meta = 10;
+
+  let snake = [{ x: 9 * box, y: 10 * box }];
+  let dir = "RIGHT";
+  let score = 0;
+  let food = {
+    x: Math.floor(Math.random() * 20) * box,
+    y: Math.floor(Math.random() * 20) * box
+  };
+  let gameOver = false;
+
+  const music = document.getElementById('music');
+
+  // Para permitir audio en móviles se recomienda que el usuario toque para iniciar música.
+  window.addEventListener('click', () => {
+    if(music.paused) {
+      music.play().catch(() => {});
+    }
+  }, { once: true });
+
+  function drawHeart(x, y) {
+    ctx.font = '20px Arial';
+    ctx.fillText('❤️', x, y + 18);
+  }
+
+  function draw() {
+    if (gameOver) return;
+
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, canvasSize, canvasSize);
+
+    drawHeart(food.x, food.y);
+
+    for (let i = 0; i < snake.length; i++) {
+      ctx.fillStyle = i === 0 ? 'lime' : 'green';
+      ctx.fillRect(snake[i].x, snake[i].y, box, box);
+      ctx.strokeStyle = '#003300';
+      ctx.strokeRect(snake[i].x, snake[i].y, box, box);
+    }
+
+    let headX = snake[0].x;
+    let headY = snake[0].y;
+
+    if (dir === 'LEFT') headX -= box;
+    if (dir === 'RIGHT') headX += box;
+    if (dir === 'UP') headY -= box;
+    if (dir === 'DOWN') headY += box;
+
+    if (
+      headX < 0 ||
+      headX >= canvasSize ||
+      headY < 0 ||
+      headY >= canvasSize ||
+      collision(headX, headY, snake)
+    ) {
+      endGame();
+      return;
+    }
+
+    if (headX === food.x && headY === food.y) {
+      score++;
+      if (score === meta) {
+        showMessage();
+        return;
+      }
+      food = {
+        x: Math.floor(Math.random() * 20) * box,
+        y: Math.floor(Math.random() * 20) * box
+      };
+    } else {
+      snake.pop();
+    }
+
+    snake.unshift({ x: headX, y: headY });
+
+    ctx.fillStyle = '#fff';
+    ctx.font = '20px Courier New';
+    ctx.fillText(`❤️ ${score} / ${meta}`, 10, 30);
+  }
+
+  function collision(x, y, array) {
+    for (let i = 0; i < array.length; i++) {
+      if (array[i].x === x && array[i].y === y) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function endGame() {
+    gameOver = true;
+    music.pause();
+    alert('¡Game Over! Intenta de nuevo.');
+    location.reload();
+  }
+
+  function showMessage() {
+    gameOver = true;
+    music.pause();
+    document.getElementById('message').style.display = 'block';
+    document.getElementById('message').textContent =
+      'Dalia Zapata García mi amor ❤️\n\nLlegarán flores, rosas y chocolates\npero no puedo esperar más,\nTomemos esto como el 50% de la propuesta.\n\nTe amo ❤️\n\n¿Quieres ser mi novia?';
+  }
+
+  // Control teclado
+  window.addEventListener('keydown', e => {
+    const key = e.keyCode;
+    if (key === 37 && dir !== 'RIGHT') dir = 'LEFT';
+    else if (key === 38 && dir !== 'DOWN') dir = 'UP';
+    else if (key === 39 && dir !== 'LEFT') dir = 'RIGHT';
+    else if (key === 40 && dir !== 'UP') dir = 'DOWN';
+  });
+
+  // Control táctil
+  document.getElementById('upBtn').addEventListener('touchstart', () => {
+    if (dir !== 'DOWN') dir = 'UP';
+  });
+  document.getElementById('downBtn').addEventListener('touchstart', () => {
+    if (dir !== 'UP') dir = 'DOWN';
+  });
+  document.getElementById('leftBtn').addEventListener('touchstart', () => {
+    if (dir !== 'RIGHT') dir = 'LEFT';
+  });
+  document.getElementById('rightBtn').addEventListener('touchstart', () => {
+    if (dir !== 'LEFT') dir = 'RIGHT';
+  });
+
+  // Velocidad reducida: intervalo 150 ms (antes 100 ms)
+  setInterval(draw, 150);
+</script>
+
+</body>
+</html>
+
+
